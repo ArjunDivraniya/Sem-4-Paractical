@@ -21,9 +21,8 @@ pipeline {
             steps {
                 dir('DevOOPS/to-do') {
                     echo 'Cleaning up the workspace...'
-                    // Make mvnw executable and run it
-                    sh 'chmod +x mvnw'
-                    sh './mvnw clean'
+                    // Run the Windows Maven wrapper
+                    bat 'mvnw.cmd clean'
                     echo 'Workspace is clean!'
                 }
             }
@@ -33,7 +32,7 @@ pipeline {
             steps {
                 dir('DevOOPS/to-do') {
                     echo 'Compiling the application...'
-                    sh './mvnw compile'
+                    bat 'mvnw.cmd compile'
                     echo 'Build completed successfully!'
                 }
             }
@@ -43,7 +42,7 @@ pipeline {
             steps {
                 dir('DevOOPS/to-do') {
                     echo 'Running unit tests...'
-                    sh './mvnw test'
+                    bat 'mvnw.cmd test'
                     echo 'All tests passed successfully!'
                 }
             }
@@ -53,7 +52,7 @@ pipeline {
             steps {
                 dir('DevOOPS/to-do') {
                     echo 'Packaging the application into a JAR file...'
-                    sh './mvnw package -DskipTests'
+                    bat 'mvnw.cmd package -DskipTests'
                     echo 'Packaging completed successfully!'
                 }
             }
@@ -62,12 +61,18 @@ pipeline {
         stage('Run Application') {
             steps {
                 dir('DevOOPS/to-do') {
-                    echo 'Starting the Spring Boot application on EC2...'
+                    echo 'Starting the Spring Boot application on Windows...'
                     // First, stop any existing running application on port 8082
-                    sh 'fuser -k 8082/tcp || true'
+                    bat '''
+                    @echo off
+                    FOR /F "tokens=5" %%T IN (\'netstat -a -n -o ^| findstr :8082\') DO (
+                        TaskKill.exe /F /PID %%T || echo "Failed to kill process"
+                    )
+                    exit 0
+                    '''
                     
                     // Run the packaged JAR in the background and prevent Jenkins from waiting/killing it
-                    sh 'JENKINS_NODE_COOKIE=dontKillMe nohup java -jar target/to-do-0.0.1-SNAPSHOT.jar > app.log 2>&1 &'
+                    bat 'set JENKINS_NODE_COOKIE=dontKillMe ^& start "ToDoApp" javaw -jar target\\to-do-0.0.1-SNAPSHOT.jar'
                     echo 'Application started in background! Pipeline will now finish.'
                 }
             }
