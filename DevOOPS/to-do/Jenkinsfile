@@ -21,8 +21,9 @@ pipeline {
             steps {
                 dir('DevOOPS/to-do') {
                     echo 'Cleaning up the workspace...'
-                    // Using maven wrapper if available, else mvn
-                    bat 'mvnw.cmd clean'
+                    // Make mvnw executable and run it
+                    sh 'chmod +x mvnw'
+                    sh './mvnw clean'
                     echo 'Workspace is clean!'
                 }
             }
@@ -32,7 +33,7 @@ pipeline {
             steps {
                 dir('DevOOPS/to-do') {
                     echo 'Compiling the application...'
-                    bat 'mvnw.cmd compile'
+                    sh './mvnw compile'
                     echo 'Build completed successfully!'
                 }
             }
@@ -42,7 +43,7 @@ pipeline {
             steps {
                 dir('DevOOPS/to-do') {
                     echo 'Running unit tests...'
-                    bat 'mvnw.cmd test'
+                    sh './mvnw test'
                     echo 'All tests passed successfully!'
                 }
             }
@@ -52,7 +53,7 @@ pipeline {
             steps {
                 dir('DevOOPS/to-do') {
                     echo 'Packaging the application into a JAR file...'
-                    bat 'mvnw.cmd package -DskipTests'
+                    sh './mvnw package -DskipTests'
                     echo 'Packaging completed successfully!'
                 }
             }
@@ -62,10 +63,9 @@ pipeline {
             steps {
                 dir('DevOOPS/to-do') {
                     echo 'Starting the Spring Boot application locally...'
-                    // Running in background so the pipeline can finish or continue.
-                    // Note: For a real deployment, you'd deploy the JAR to a server.
-                    bat 'start mvnw.cmd spring-boot:run'
-                    echo 'Application started!'
+                    // Running in background so the pipeline can finish
+                    sh 'nohup ./mvnw spring-boot:run > app.log 2>&1 &'
+                    echo 'Application started in background!'
                 }
             }
         }
